@@ -1,1 +1,0 @@
-export { default as GoogleScriptLoader } from "./components/GoogleScriptLoader";

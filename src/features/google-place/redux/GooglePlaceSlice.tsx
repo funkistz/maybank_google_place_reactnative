@@ -16,15 +16,9 @@ export const googlePlaceSlice = createSlice({
     reducers: {
         selectPlace: (state, action) => {
 
-            console.log('selectPlace', action.payload);
-            console.log('data', current(state.data));
-
             const selectedPlace: any = current(state.data).find((data: any) => {
-                return data.name == action.payload
+                return data.place_id == action.payload
             });
-
-            console.log('selectPlace', selectedPlace);
-
 
             return state = { ...state, selected: selectedPlace }
         },
@@ -46,6 +40,9 @@ export const googlePlaceSlice = createSlice({
             state.isLoading = false;
             state.isSuccess = false;
             state.errorMessage = payload
+            console.log('getGooglePlaces error', payload);
+
+            state.data = [];
         }
     }
 })

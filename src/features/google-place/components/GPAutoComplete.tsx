@@ -1,37 +1,35 @@
-// import { AutoComplete, Input } from 'antd';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, forwardRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux'
 import { getGooglePlaces } from '../redux/GooglePlaceAction';
 import { selectPlace } from '../redux/GooglePlaceSlice';
 import { useDebounce } from 'src/hooks/useDebounce';
-// import { SearchOutlined } from '@ant-design/icons';
-import { AutocompleteInput } from 'react-native-autocomplete-input';
-import { StyleSheet, Text } from 'react-native';
-import { List, Icon } from 'antd-mobile-rn';
+import { StyleSheet, View } from 'react-native';
+import { AutocompleteDropdown } from 'react-native-autocomplete-dropdown'
+import Icon from 'react-native-vector-icons/AntDesign';
 
 function GPAutoComplete() {
 
     const places = useSelector((state: any) => state.googlePlace.data)
-    // const googlePlace = useSelector((state: any) => state.googlePlace)
 
     const dispatch = useDispatch()
     const [searchText, setSearchText] = useState<string>('')
-    const debouncedSearch = useDebounce<string>(searchText, 200);
-    const [hideSuggestion, setHideSuggestion] = useState(true)
+    const debouncedSearch = useDebounce<string>(searchText, 100);
 
-    const onSelect = (data: string) => {
+    const onSelect = (data: any) => {
         console.log('onSelect', data);
-        dispatch(selectPlace(data))
-        setSearchText(data);
-        setHideSuggestion(true);
+        if (data)
+            dispatch(selectPlace(data.id))
     };
 
     const handleSearch = (value: string) => {
+        console.log('handleSearch', value);
+
         setSearchText(value);
-        setHideSuggestion(false);
     };
 
     useEffect(() => {
+        console.log('getGooglePlaces', debouncedSearch);
+
         const promise = dispatch(getGooglePlaces(debouncedSearch))
 
         return () => {
@@ -40,41 +38,36 @@ function GPAutoComplete() {
 
     }, [debouncedSearch])
 
-    const placeOptions = useMemo(() => places.map((place: any) => (place.name)), [places])
+    const placeOptions = useMemo(() => places.map((place: any) => ({ id: place.place_id, title: place.name })), [places])
 
-    return (<>
-        {/* <AutoComplete
-            onSearch={handleSearch}
-            options={placeOptions}
-            onSelect={onSelect}
-        >
-            <Input size="large" placeholder="Find Place" prefix={<SearchOutlined />} style={styles.autocomplete} />
-        </AutoComplete> */}
-        <AutocompleteInput
-            value={searchText}
-            data={placeOptions}
-            style={styles.autocomplete}
-            onChangeText={handleSearch}
-            flatListProps={{
-                keyExtractor: (_, idx: any) => idx,
-                renderItem: ({ item }: any) => <List.Item onClick={() => onSelect(item)}>{item}</List.Item>,
-            }}
-            hideResults={hideSuggestion}
-        />
-    </>);
+    return (
+        <>
+            <View style={{ flexBasis: 'auto', flexGrow: 1 }}>
+                <AutocompleteDropdown
+                    clearOnFocus={false}
+                    closeOnBlur={true}
+                    closeOnSubmit={false}
+                    onChangeText={handleSearch}
+                    onSelectItem={(data) => onSelect(data)}
+                    dataSet={placeOptions}
+                    showChevron={false}
+                    onClear={() => handleSearch('')}
+                    textInputProps={{
+                        placeholder: 'Search here',
+
+                    }}
+                />
+            </View>
+        </>
+    );
 }
 
 export default GPAutoComplete;
 
 const styles = StyleSheet.create({
-    mapStyle: {
-        height: 400,
-        width: 400
-    },
     autocomplete: {
         height: 50,
-        width: 420,
-        borderRadius: 15
+        zIndex: 999
     },
 });
 

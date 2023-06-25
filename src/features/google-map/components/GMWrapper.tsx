@@ -1,48 +1,55 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import MapView, { Marker } from 'react-native-maps';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
+const { width, height } = Dimensions.get('window')
 
-const containerStyle = {
-    minWidth: '400px',
-    minHeight: '400px',
-    width: '100%',
-    height: '100%'
+const initialRegion = {
+    latitude: 3.1466,
+    longitude: 101.6958,
+    latitudeDelta: 3.1466,
+    longitudeDelta: 101.6958,
 };
 
-const defaultLocation = {
-    lat: 3.1466,
-    lng: 101.6958
-};
-
-function GMWrapper({ centerMarker = false }: { centerMarker: any }) {
+function GMWrapper({ centerMarker = false, currentLocation, height }: { centerMarker: any, currentLocation: any, height: number }) {
 
     const centerMarkerJson = JSON.stringify(centerMarker)
-    const center = useMemo(() => centerMarker ? centerMarker.location : defaultLocation, [centerMarkerJson])
+    const center = useMemo(() => {
+        if (!centerMarker) {
+            return currentLocation ? currentLocation : initialRegion
+        } else {
+            return ({
+                latitude: centerMarker?.geometry?.location?.lat,
+                longitude: centerMarker?.geometry?.location?.lng,
+                latitudeDelta: centerMarker?.geometry?.location?.lat,
+                longitudeDelta: centerMarker?.geometry?.location?.lng,
+            })
+        }
+    }, [centerMarkerJson, currentLocation])
 
-    console.log('render');
+    const markerElement = useRef<any>();
+    useEffect(() => {
+        if (markerElement && markerElement.current)
+            markerElement.current.showCallout()
+
+    }, [centerMarker])
 
     return (
         <MapView
-            style={styles.mapStyle}
-            initialRegion={{
-                latitude: 37.78825,
-                longitude: -122.4324,
-                latitudeDelta: 0.0922,
-                longitudeDelta: 0.0421,
-            }}
+            style={{ ...styles.mapStyle, height: height }}
+            minZoomLevel={10}
+            maxZoomLevel={18}
+            region={center}
         >
-            <Marker
-                draggable
+            {centerMarker && <Marker
+                ref={markerElement}
                 coordinate={{
-                    latitude: 37.78825,
-                    longitude: -122.4324,
+                    latitude: center.latitude,
+                    longitude: center.longitude,
                 }}
-                onDragEnd={
-                    (e) => { }
-                }
-                title={'Test Marker'}
-                description={'This is a description of the marker'}
+                title={centerMarker.name}
+                description={centerMarker.formatted_address}
             />
+            }
         </MapView>
     )
 }
@@ -51,7 +58,6 @@ export default GMWrapper;
 
 const styles = StyleSheet.create({
     mapStyle: {
-        height: 400,
-        width: 400
+        width: width
     },
 });

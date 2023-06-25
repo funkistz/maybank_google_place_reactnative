@@ -1,159 +1,60 @@
-import React, { useState } from 'react'
-import { StyleSheet, Text, View, PermissionsAndroid, SafeAreaView, Alert, Platform } from 'react-native'
-import MapView, { Marker } from 'react-native-maps';
-import Geolocation from 'react-native-geolocation-service';
-import { Button } from 'antd-mobile-rn';
-import { request, PERMISSIONS } from 'react-native-permissions';
+import React from 'react'
+import { StyleSheet, Text, View, Dimensions } from 'react-native'
 import { GMWrapper } from '@features/google-map';
 import { GPAutoComplete } from '@features/google-place';
+import { useSelector } from 'react-redux';
+import withCurrentLocation from '@components/withCurrentLocation';
+
+const { width, height } = Dimensions.get('window')
 
 export default function HomePage(): JSX.Element {
 
-    const [location, setLocation] = useState<any>(false);
-    const [isLoading, setIsLoading] = useState<any>(false);
+    const selectedPlace = useSelector((state: any) => state.googlePlace.selected)
 
-    const requestLocationPermission = async () => {
-        setIsLoading(true);
-        try {
-            const locationPermissionRequest = await request(
-                Platform.OS === 'ios'
-                    ? PERMISSIONS.IOS.LOCATION_ALWAYS
-                    : PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION
-            );
-        } catch (err) {
-            return false;
-        }
-    };
-
-    const getLocation = () => {
-        Geolocation.getCurrentPosition(
-            (position: any) => {
-                console.log(position);
-                setLocation(position);
-            },
-            error => {
-                // See error code charts below.
-                console.log(error.code, error.message);
-                setLocation(false);
-            },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-        );
-
-    };
+    const MapWithPermission = withCurrentLocation(GMWrapper);
 
     return (
-        <SafeAreaView >
-            <View style={styles.container}>
-                <GMWrapper centerMarker={null} />
+        <View style={styles.container}>
+
+            <View style={styles.autocompleteWrapper}>
+                <Text style={{ fontSize: 30, marginBottom: 10, marginTop: 10, fontWeight: 'bold' }}>Google Place</Text>
                 <GPAutoComplete />
-
-                <Button onClick={requestLocationPermission} >Get Permissionx</Button>
-                <Button onClick={getLocation} >Get Location</Button>
-                <Text>Latitude: {location ? location.coords.latitude : null}</Text>
-                <Text>Longitude: {location ? location.coords.longitude : null} </Text>
-
+                <Text style={{ width: '100%', textAlign: 'right', marginTop: 5 }}>powered by Google</Text>
             </View>
-        </SafeAreaView>
+            <View style={styles.mapContainer}>
+                <MapWithPermission centerMarker={selectedPlace} height={height - 180} loadingStyle={styles.loadingStyle} />
+            </View>
+        </View>
     )
 }
 
-const mapStyle = [
-    { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-    { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-    { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-    {
-        featureType: 'administrative.locality',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#d59563' }],
-    },
-    {
-        featureType: 'poi',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#d59563' }],
-    },
-    {
-        featureType: 'poi.park',
-        elementType: 'geometry',
-        stylers: [{ color: '#263c3f' }],
-    },
-    {
-        featureType: 'poi.park',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#6b9a76' }],
-    },
-    {
-        featureType: 'road',
-        elementType: 'geometry',
-        stylers: [{ color: '#38414e' }],
-    },
-    {
-        featureType: 'road',
-        elementType: 'geometry.stroke',
-        stylers: [{ color: '#212a37' }],
-    },
-    {
-        featureType: 'road',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#9ca5b3' }],
-    },
-    {
-        featureType: 'road.highway',
-        elementType: 'geometry',
-        stylers: [{ color: '#746855' }],
-    },
-    {
-        featureType: 'road.highway',
-        elementType: 'geometry.stroke',
-        stylers: [{ color: '#1f2835' }],
-    },
-    {
-        featureType: 'road.highway',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#f3d19c' }],
-    },
-    {
-        featureType: 'transit',
-        elementType: 'geometry',
-        stylers: [{ color: '#2f3948' }],
-    },
-    {
-        featureType: 'transit.station',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#d59563' }],
-    },
-    {
-        featureType: 'water',
-        elementType: 'geometry',
-        stylers: [{ color: '#17263c' }],
-    },
-    {
-        featureType: 'water',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#515c6d' }],
-    },
-    {
-        featureType: 'water',
-        elementType: 'labels.text.stroke',
-        stylers: [{ color: '#17263c' }],
-    },
-];
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: 'white',
-        // position: 'absolute',
-        // top: 0,
-        // left: 0,
-        // right: 0,
-        // bottom: 0,
-        alignItems: 'center',
-        justifyContent: 'flex-end',
+        backgroundColor: '#fff',
+        height: height,
+        width: width,
     },
-    mapStyle: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: 400
+    mapContainer: {
+        width: width,
+        height: height - 150,
+        marginTop: -10
     },
+    autocompleteWrapper: {
+        zIndex: 999,
+        backgroundColor: '#fff',
+        borderBottomLeftRadius: 15,
+        borderBottomRightRadius: 15,
+        padding: 15,
+        width: width,
+        overflow: 'visible',
+        shadowColor: '#171717',
+        shadowOffset: { width: -2, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3,
+    },
+    loadingStyle: {
+        marginTop: 50,
+        width: '100%',
+        textAlign: 'center'
+    }
 });

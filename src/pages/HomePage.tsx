@@ -4,7 +4,6 @@ import { GMWrapper } from '@features/google-map';
 import { GPAutoComplete } from '@features/google-place';
 import { useSelector } from 'react-redux';
 import withCurrentLocation from '@components/withCurrentLocation';
-
 const { width, height } = Dimensions.get('window')
 
 export default function HomePage(): JSX.Element {
